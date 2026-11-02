@@ -1,0 +1,6 @@
+[submodule "Sources/cachy-chroot"]
+	path = Sources/cachy-chroot
+	url = https://github.com/CachyOS/cachy-chroot
+[submodule "Sources/cachyos-bootloader-switcher"]
+	path = Sources/cachyos-bootloader-switcher
+	url = https://github.com/seba970423/cachyos-bootloader-switcher
