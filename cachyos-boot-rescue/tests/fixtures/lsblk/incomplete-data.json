@@ -1,0 +1,32 @@
+{
+  "blockdevices": [
+    {
+      "name": "nvme1n1",
+      "path": "/dev/nvme1n1",
+      "type": "disk",
+      "children": [
+        {
+          "name": "nvme1n1p1",
+          "path": "/dev/nvme1n1p1",
+          "type": "part",
+          "parttype": "c12a7328-f81f-11d2-ba4b-00a0c93ec93b",
+          "fstype": null,
+          "label": null,
+          "uuid": null,
+          "partuuid": null,
+          "mountpoints": null
+        },
+        {
+          "name": "nvme1n1p2",
+          "path": "/dev/nvme1n1p2",
+          "type": "part",
+          "size": 1999325198336,
+          "fstype": "unknown-fs",
+          "mountpoints": [
+            null
+          ]
+        }
+      ]
+    }
+  ]
+}

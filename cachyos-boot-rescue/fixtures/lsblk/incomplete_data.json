@@ -1,0 +1,83 @@
+{
+  "blockdevices": [
+    {
+      "name": "sda",
+      "path": "/dev/sda",
+      "maj:min": "8:0",
+      "type": "disk",
+      "size": "500107862016",
+      "sectorsize": "512",
+      "logical_sector_size": "512",
+      "model": null,
+      "serial": null,
+      "vendor": null,
+      "rota": null,
+      "rm": false,
+      "ro": false,
+      "pttype": "gpt",
+      "children": [
+        {
+          "name": "sda1",
+          "path": "/dev/sda1",
+          "maj:min": "8:1",
+          "type": "part",
+          "size": "536870912",
+          "sectorsize": "512",
+          "logical_sector_size": "512",
+          "fstype": null,
+          "label": null,
+          "uuid": null,
+          "partuuid": null,
+          "parttype": null,
+          "parttypename": null,
+          "mountpoint": null,
+          "mountpoints": [null],
+          "mountoptions": [],
+          "pkname": "sda"
+        },
+        {
+          "name": "sda2",
+          "path": "/dev/sda2",
+          "maj:min": "8:2",
+          "type": "part",
+          "size": "499570991104",
+          "sectorsize": "512",
+          "logical_sector_size": "512",
+          "fstype": "ext4",
+          "label": null,
+          "uuid": "11111111-2222-3333-4444-555555555555",
+          "partuuid": null,
+          "parttype": "0fc63daf-8483-4772-8e79-3d69d8477de4",
+          "parttypename": "Linux filesystem",
+          "mountpoint": "/",
+          "mountpoints": ["/"],
+          "mountoptions": ["rw", "relatime"],
+          "pkname": "sda"
+        }
+      ]
+    },
+    {
+      "name": "loop0",
+      "path": "/dev/loop0",
+      "maj:min": "7:0",
+      "type": "loop",
+      "size": "1073741824",
+      "sectorsize": "512",
+      "logical_sector_size": "512",
+      "model": null,
+      "serial": null,
+      "vendor": null,
+      "rota": "0",
+      "rm": false,
+      "ro": true,
+      "fstype": "squashfs",
+      "label": null,
+      "uuid": null,
+      "partuuid": null,
+      "mountpoint": "/run/archiso/bootmnt",
+      "mountpoints": ["/run/archiso/bootmnt"],
+      "mountoptions": ["ro", "relatime"],
+      "pkname": null
+    }
+  ]
+}

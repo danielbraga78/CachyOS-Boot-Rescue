@@ -1,0 +1,60 @@
+{
+  "blockdevices": [
+    {
+      "name": "sda",
+      "path": "/dev/sda",
+      "maj:min": "8:0",
+      "type": "disk",
+      "size": "256060514304",
+      "sectorsize": "512",
+      "logical_sector_size": "512",
+      "model": "Generic SSD 256GB",
+      "serial": "GEN123456",
+      "vendor": "Generic",
+      "rota": "0",
+      "rm": false,
+      "ro": false,
+      "pttype": "gpt",
+      "children": [
+        {
+          "name": "sda1",
+          "path": "/dev/sda1",
+          "maj:min": "8:1",
+          "type": "part",
+          "size": "268435456",
+          "sectorsize": "512",
+          "logical_sector_size": "512",
+          "fstype": "vfat",
+          "label": null,
+          "uuid": "1234-5678",
+          "partuuid": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+          "parttype": "c12a7328-f81f-11d2-ba4b-00a0c93ec93b",
+          "parttypename": "EFI System Partition",
+          "mountpoint": "/boot/efi",
+          "mountpoints": ["/boot/efi"],
+          "mountoptions": ["rw", "relatime", "fmask=0022", "dmask=0022", "codepage=437", "iocharset=ascii", "shortname=mixed", "utf8", "errors=remount-ro"],
+          "pkname": "sda"
+        },
+        {
+          "name": "sda2",
+          "path": "/dev/sda2",
+          "maj:min": "8:2",
+          "type": "part",
+          "size": "255792078848",
+          "sectorsize": "512",
+          "logical_sector_size": "512",
+          "fstype": "ext4",
+          "label": null,
+          "uuid": "bbbbbbbb-cccc-dddd-eeee-ffffffffffff",
+          "partuuid": "bbbbbbbb-cccc-dddd-eeee-ffffffffffff",
+          "parttype": "0fc63daf-8483-4772-8e79-3d69d8477de4",
+          "parttypename": "Linux filesystem",
+          "mountpoint": "/",
+          "mountpoints": ["/"],
+          "mountoptions": ["rw", "relatime"],
+          "pkname": "sda"
+        }
+      ]
+    }
+  ]
+}

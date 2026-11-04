@@ -1,0 +1,76 @@
+[package]
+name = "cachyos-boot-rescue"
+version = "0.1.0"
+edition = "2024"
+description = "CachyOS Boot Rescue - Diagnóstico e recuperação de inicialização Linux"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/cachyos/cachyos-boot-rescue"
+readme = false
+keywords = ["boot", "rescue", "linux", "cachyos", "arch", "grub", "systemd-boot", "efi"]
+categories = ["command-line-utilities", "system-tools"]
+
+# MSRV: 1.99.0 (versão estável atual no CI - 2026-10-15)
+# Verificada via `rustc --version` no ambiente de CI
+rust-version = "1.99.0"
+
+[dependencies]
+# CLI parsing
+clap = { version = "4.5", features = ["derive", "env", "help"] }
+
+# Configuração tipada
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.8"
+
+# Tratamento de erros
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt", "ansi", "registry"] }
+tracing-appender = "0.2"
+tracing-serde = "0.2"
+
+# Time and UUID for structured logging
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.0", features = ["v4", "serde", "fast-rng"] }
+
+# Compression and archiving for reports
+flate2 = "1.0"
+tar = "0.4"
+
+# Sanitization
+regex = "1.0"
+
+# Senha segura para LUKS
+rpassword = "7.0"
+
+# Serialization for structured events
+serde_json = "1.0"
+
+# Utilitários de caminho
+dirs = "5.0"
+
+# Runtime assíncrono
+tokio = { version = "1.40", features = ["rt-multi-thread", "macros"] }
+
+[dev-dependencies]
+tempfile = "3.8"
+predicates = "3.0"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[profile.dev]
+opt-level = 0
+debug = true
+
+[profile.test]
+opt-level = 2
+debug = true
+
+[features]
+default = []

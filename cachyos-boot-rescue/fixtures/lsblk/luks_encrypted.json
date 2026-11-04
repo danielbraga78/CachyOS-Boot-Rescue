@@ -1,0 +1,76 @@
+{
+  "blockdevices": [
+    {
+      "name": "nvme0n1",
+      "path": "/dev/nvme0n1",
+      "maj:min": "259:0",
+      "type": "disk",
+      "size": "500107862016",
+      "sectorsize": "512",
+      "logical_sector_size": "512",
+      "model": "Samsung 980 PRO 500GB",
+      "serial": "S3456789",
+      "vendor": "Samsung",
+      "rota": "0",
+      "rm": false,
+      "ro": false,
+      "pttype": "gpt",
+      "children": [
+        {
+          "name": "nvme0n1p1",
+          "path": "/dev/nvme0n1p1",
+          "maj:min": "259:1",
+          "type": "part",
+          "size": "1073741824",
+          "sectorsize": "512",
+          "logical_sector_size": "512",
+          "fstype": "vfat",
+          "label": "EFI",
+          "uuid": "EEEE-4444",
+          "partuuid": "c12a7328-f81f-11d2-ba4b-00a0c93ec93b",
+          "parttype": "c12a7328-f81f-11d2-ba4b-00a0c93ec93b",
+          "parttypename": "EFI System Partition",
+          "mountpoint": "/boot/efi",
+          "mountpoints": ["/boot/efi"],
+          "mountoptions": ["rw", "relatime", "fmask=0022", "dmask=0022", "codepage=437", "iocharset=ascii", "shortname=mixed", "utf8", "errors=remount-ro"],
+          "pkname": "nvme0n1"
+        },
+        {
+          "name": "nvme0n1p2",
+          "path": "/dev/nvme0n1p2",
+          "maj:min": "259:2",
+          "type": "part",
+          "size": "499034118144",
+          "sectorsize": "512",
+          "logical_sector_size": "512",
+          "fstype": "crypto_LUKS",
+          "label": "luks_root",
+          "uuid": "luks-uuid-1234-5678-9abcdef01234",
+          "partuuid": "luks-partuuid-1234-5678-9abcdef01234",
+          "parttype": "0fc63daf-8483-4772-8e79-3d69d8477de4",
+          "parttypename": "Linux filesystem",
+          "mountpoint": null,
+          "mountpoints": [null],
+          "mountoptions": [],
+          "pkname": "nvme0n1"
+        }
+      ]
+    },
+    {
+      "name": "dm-0",
+      "path": "/dev/mapper/luks_root",
+      "maj:min": "254:0",
+      "type": "crypt",
+      "size": "499033069568",
+      "sectorsize": "512",
+      "logical_sector_size": "512",
+      "fstype": "btrfs",
+      "label": "cachyos",
+      "uuid": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "mountpoint": "/",
+      "mountpoints": ["/"],
+      "mountoptions": ["rw", "relatime", "compress=zstd:1", "ssd", "space_cache=v2", "subvol=@"],
+      "pkname": "nvme0n1p2"
+    }
+  ]
+}

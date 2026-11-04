@@ -1,0 +1,43 @@
+{
+  "blockdevices": [
+    {
+      "name": "sdb",
+      "path": "/dev/sdb",
+      "maj:min": "8:16",
+      "rm": false,
+      "size": 500107862016,
+      "type": "disk",
+      "tran": "sata",
+      "children": [
+        {
+          "name": "sdb1",
+          "path": "/dev/sdb1",
+          "maj:min": "8:17",
+          "size": 536870912,
+          "type": "part",
+          "parttype": "c12a7328-f81f-11d2-ba4b-00a0c93ec93b",
+          "fstype": "vfat",
+          "uuid": "C9D0-E1F2",
+          "partuuid": "55555555-1111-4111-8111-111111111111",
+          "mountpoints": [
+            null
+          ]
+        },
+        {
+          "name": "sdb2",
+          "path": "/dev/sdb2",
+          "maj:min": "8:18",
+          "size": 499570991104,
+          "type": "part",
+          "parttype": "0fc63daf-8483-4772-8e79-3d69d8477de4",
+          "fstype": "ext4",
+          "uuid": "66666666-6666-4666-8666-666666666666",
+          "partuuid": "66666666-1111-4111-8111-111111111111",
+          "mountpoints": [
+            null
+          ]
+        }
+      ]
+    }
+  ]
+}

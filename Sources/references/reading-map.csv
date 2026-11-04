@@ -1,0 +1,14 @@
+task,source_ids,primary_concern,project_caution
+Block-device discovery,"util-linux-lsblk;util-linux-blkid",Stable structured output and evidence quality,Read-only commands only; preserve ambiguity and multiple mounts
+ESP and firmware identification,"arch-esp;arch-uefi;systemd-bootctl",UEFI mode and partition type evidence,Do not infer mountpoint or modify ESP/NVRAM
+GRUB diagnosis,"arch-grub;gnu-grub-manual;gnu-grub-install",Distinguish BIOS and UEFI configuration,Installation examples may write disk or EFI state
+systemd-boot diagnosis,"arch-systemd-boot;systemd-bootctl;uapi-bls",Entries and shared ESP/XBOOTLDR content,Preserve foreign entries and shared files
+Btrfs root discovery,"btrfs-subvolumes;arch-chroot-wiki",Subvolume-aware mount and chroot modeling,Snapshot is not a backup; do not alter default subvolume
+Recovery environment,"arch-chroot-wiki;arch-chroot-man",Mount hierarchy and API filesystems,Verify target root and mounts before privileged commands
+Initramfs diagnosis,"arch-mkinitcpio",Kernel presets and generation inputs,Regeneration writes boot artifacts; test only in disposable environments
+CachyOS compatibility,"cachyos-installation",Distro-specific installer and boot-manager context,Do not assume installed-system layout from installer defaults
+External process implementation,"rust-command;rust-output",Argument safety and error/output handling,No shell interpolation; bound time and output
+Shell maintenance,"shellcheck;shellcheck-sc2086",Expansion safety and static analysis,Lint does not prove an operation is non-destructive
+Rust test strategy,"cargo-test",Unit, integration and documentation tests,Use fixtures/mocks/VMs; never test against real storage
+Limine behavior and configuration,"arch-limine;limine-upstream;limine-config;limine-usage;limine-faq",UEFI/BIOS modes, config search order, entries and integrity,Do not infer active loader from files or installer defaults
+CachyOS default and integration,"cachyos-installation;cachyos-calamares-bootloader-choice;cachyos-calamares-bootloader-config;cachyos-calamares-partition-config;cachyos-calamares-bootloader-module;cachyos-calamares-package-selection;cachyos-limine-pkgbuild",Installer default and distribution-specific kernel/snapshot handling,Default is installer evidence only; inspect the installed target and firmware

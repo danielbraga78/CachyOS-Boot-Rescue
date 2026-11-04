@@ -1,0 +1,32 @@
+{
+  "blockdevices": [
+    {
+      "name": "sdc",
+      "path": "/dev/sdc",
+      "maj:min": "8:32",
+      "rm": true,
+      "size": 64021856256,
+      "ro": false,
+      "type": "disk",
+      "tran": "usb",
+      "rota": false,
+      "children": [
+        {
+          "name": "sdc1",
+          "path": "/dev/sdc1",
+          "maj:min": "8:33",
+          "size": 64019759104,
+          "type": "part",
+          "parttype": "0fc63daf-8483-4772-8e79-3d69d8477de4",
+          "fstype": "exfat",
+          "label": "RESCUE-USB",
+          "uuid": "7777-8888",
+          "partuuid": "77777777-1111-4111-8111-111111111111",
+          "mountpoints": [
+            "/run/media/liveuser/RESCUE-USB"
+          ]
+        }
+      ]
+    }
+  ]
+}

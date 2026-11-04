@@ -1,0 +1,79 @@
+{
+  "blockdevices": [
+    {
+      "name": "nvme0n1",
+      "path": "/dev/nvme0n1",
+      "maj:min": "259:0",
+      "type": "disk",
+      "size": "1000204886016",
+      "sectorsize": "512",
+      "logical_sector_size": "512",
+      "model": "Samsung SSD 970 EVO Plus 1TB",
+      "serial": "S987654321",
+      "vendor": "Samsung",
+      "rota": "0",
+      "rm": false,
+      "ro": false,
+      "pttype": "gpt",
+      "children": [
+        {
+          "name": "nvme0n1p1",
+          "path": "/dev/nvme0n1p1",
+          "maj:min": "259:1",
+          "type": "part",
+          "size": "536870912",
+          "sectorsize": "512",
+          "logical_sector_size": "512",
+          "fstype": "vfat",
+          "label": "ESP",
+          "uuid": "EF01-2345",
+          "partuuid": "c12a7328-f81f-11d2-ba4b-00a0c93ec93b",
+          "parttype": "c12a7328-f81f-11d2-ba4b-00a0c93ec93b",
+          "parttypename": "EFI System Partition",
+          "mountpoint": "/efi",
+          "mountpoints": ["/efi"],
+          "mountoptions": ["rw", "relatime", "fmask=0022", "dmask=0022", "codepage=437", "iocharset=ascii", "shortname=mixed", "utf8", "errors=remount-ro"],
+          "pkname": "nvme0n1"
+        },
+        {
+          "name": "nvme0n1p2",
+          "path": "/dev/nvme0n1p2",
+          "maj:min": "259:2",
+          "type": "part",
+          "size": "107374182400",
+          "sectorsize": "512",
+          "logical_sector_size": "512",
+          "fstype": "btrfs",
+          "label": "cachyos",
+          "uuid": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+          "partuuid": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+          "parttype": "0fc63daf-8483-4772-8e79-3d69d8477de4",
+          "parttypename": "Linux filesystem",
+          "mountpoint": "/",
+          "mountpoints": ["/"],
+          "mountoptions": ["rw", "relatime", "compress=zstd:1", "ssd", "space_cache=v2", "subvol=@"],
+          "pkname": "nvme0n1"
+        },
+        {
+          "name": "nvme0n1p3",
+          "path": "/dev/nvme0n1p3",
+          "maj:min": "259:3",
+          "type": "part",
+          "size": "872374353920",
+          "sectorsize": "512",
+          "logical_sector_size": "512",
+          "fstype": "btrfs",
+          "label": "home",
+          "uuid": "bbbbbbbb-cccc-dddd-eeee-ffffffffffff",
+          "partuuid": "bbbbbbbb-cccc-dddd-eeee-ffffffffffff",
+          "parttype": "0fc63daf-8483-4772-8e79-3d69d8477de4",
+          "parttypename": "Linux filesystem",
+          "mountpoint": "/home",
+          "mountpoints": ["/home"],
+          "mountoptions": ["rw", "relatime", "compress=zstd:1", "ssd", "space_cache=v2", "subvol=@home"],
+          "pkname": "nvme0n1"
+        }
+      ]
+    }
+  ]
+}

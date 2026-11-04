@@ -1,0 +1,286 @@
+{
+  "catalog_version": 1,
+  "verified_on": "2026-11-03",
+  "purpose": "Curated upstream references for CachyOS Boot Rescue development",
+  "items": [
+    {
+      "id": "arch-grub",
+      "category": "bootloaders",
+      "title": "ArchWiki: GRUB",
+      "url": "https://wiki.archlinux.org/title/GRUB",
+      "format": "living documentation",
+      "relevance": "Arch-specific GRUB configuration, UEFI/BIOS distinctions and ESP handling",
+      "local_note": "bootloaders/GRUB.md"
+    },
+    {
+      "id": "gnu-grub-manual",
+      "category": "bootloaders",
+      "title": "GNU GRUB Manual",
+      "url": "https://www.gnu.org/software/grub/manual/grub/grub.html",
+      "format": "upstream manual",
+      "relevance": "GRUB concepts, configuration and supported behavior",
+      "local_note": "bootloaders/GRUB.md"
+    },
+    {
+      "id": "gnu-grub-install",
+      "category": "bootloaders",
+      "title": "GNU GRUB: Installing GRUB using grub-install",
+      "url": "https://www.gnu.org/software/grub/manual/grub/html_node/Installing-GRUB-using-grub_002dinstall.html",
+      "format": "upstream manual",
+      "relevance": "Installation options and explicit EFI directory behavior",
+      "local_note": "bootloaders/GRUB.md"
+    },
+    {
+      "id": "arch-systemd-boot",
+      "category": "bootloaders",
+      "title": "ArchWiki: systemd-boot",
+      "url": "https://wiki.archlinux.org/title/Systemd-boot",
+      "format": "living documentation",
+      "relevance": "UEFI boot entries, ESP and XBOOTLDR",
+      "local_note": "bootloaders/SYSTEMD_BOOT.md"
+    },
+    {
+      "id": "systemd-bootctl",
+      "category": "bootloaders",
+      "title": "systemd bootctl manual",
+      "url": "https://www.freedesktop.org/software/systemd/man/latest/bootctl.html",
+      "format": "upstream manual",
+      "relevance": "bootctl behavior and ESP/XBOOTLDR path discovery",
+      "local_note": "bootloaders/SYSTEMD_BOOT.md"
+    },
+    {
+      "id": "uapi-bls",
+      "category": "bootloaders",
+      "title": "UAPI.1 Boot Loader Specification",
+      "url": "https://uapi-group.org/specifications/specs/boot_loader_specification/",
+      "format": "specification",
+      "relevance": "Shared boot-entry formats and ESP/XBOOTLDR conventions",
+      "local_note": "bootloaders/BOOT_LOADER_SPECIFICATION.md"
+    },
+    {
+      "id": "arch-limine",
+      "category": "bootloaders",
+      "title": "ArchWiki: Limine",
+      "url": "https://wiki.archlinux.org/title/Limine",
+      "format": "living documentation",
+      "relevance": "Limine deployment on UEFI and BIOS, config lookup, and Linux entries",
+      "local_note": "bootloaders/LIMINE.md"
+    },
+    {
+      "id": "limine-upstream",
+      "category": "bootloaders",
+      "title": "Limine upstream README",
+      "url": "https://github.com/Limine-Bootloader/Limine",
+      "format": "upstream documentation",
+      "relevance": "Supported architectures, protocols, partitioning and filesystems",
+      "local_note": "bootloaders/LIMINE.md"
+    },
+    {
+      "id": "limine-config",
+      "category": "bootloaders",
+      "title": "Limine upstream CONFIG.md",
+      "url": "https://github.com/Limine-Bootloader/Limine/blob/trunk/CONFIG.md",
+      "format": "upstream documentation",
+      "relevance": "Config-file location, search precedence, syntax and menu entries",
+      "local_note": "bootloaders/LIMINE.md"
+    },
+    {
+      "id": "limine-usage",
+      "category": "bootloaders",
+      "title": "Limine upstream USAGE.md",
+      "url": "https://github.com/Limine-Bootloader/Limine/blob/trunk/USAGE.md",
+      "format": "upstream documentation",
+      "relevance": "UEFI use, Secure Boot and Measured Boot requirements",
+      "local_note": "bootloaders/LIMINE.md"
+    },
+    {
+      "id": "limine-faq",
+      "category": "bootloaders",
+      "title": "Limine upstream FAQ",
+      "url": "https://github.com/Limine-Bootloader/Limine/blob/trunk/FAQ.md",
+      "format": "upstream documentation",
+      "relevance": "Filesystem support and integrity design considerations",
+      "local_note": "bootloaders/LIMINE.md"
+    },
+    {
+      "id": "cachyos-calamares-bootloader-choice",
+      "category": "platform",
+      "title": "CachyOS Calamares bootloader chooser configuration",
+      "url": "https://github.com/CachyOS/cachyos-calamares/blob/e6c22095c3ed4e51725a7cbf9870d453462eb1fb/src/modules/packagechooser/packagechooser_bootloader.conf",
+      "format": "pinned source configuration",
+      "relevance": "Evidence that the cited CachyOS installer snapshot defaults to Limine while offering alternatives",
+      "local_note": "bootloaders/CACHYOS_LIMINE.md"
+    },
+    {
+      "id": "cachyos-calamares-bootloader-config",
+      "category": "platform",
+      "title": "CachyOS Calamares bootloader configuration",
+      "url": "https://github.com/CachyOS/cachyos-calamares/blob/e6c22095c3ed4e51725a7cbf9870d453462eb1fb/src/modules/bootloader/bootloader.conf",
+      "format": "pinned source configuration",
+      "relevance": "Limine EFI default and installer bootloader selection variable",
+      "local_note": "bootloaders/CACHYOS_LIMINE.md"
+    },
+    {
+      "id": "cachyos-calamares-partition-config",
+      "category": "platform",
+      "title": "CachyOS Calamares partition configuration",
+      "url": "https://github.com/CachyOS/cachyos-calamares/blob/e6c22095c3ed4e51725a7cbf9870d453462eb1fb/src/modules/partition/partition.conf",
+      "format": "pinned source configuration",
+      "relevance": "Installer partition/mount settings conditional on bootloader selection",
+      "local_note": "bootloaders/CACHYOS_LIMINE.md"
+    },
+    {
+      "id": "cachyos-calamares-bootloader-module",
+      "category": "platform",
+      "title": "CachyOS Calamares bootloader module",
+      "url": "https://github.com/CachyOS/cachyos-calamares/blob/e6c22095c3ed4e51725a7cbf9870d453462eb1fb/src/modules/bootloader/main.py",
+      "format": "pinned source code",
+      "relevance": "Installer behavior for kernel discovery and generated Limine configuration",
+      "local_note": "bootloaders/CACHYOS_LIMINE.md"
+    },
+    {
+      "id": "cachyos-calamares-package-selection",
+      "category": "platform",
+      "title": "CachyOS Calamares package selection module",
+      "url": "https://github.com/CachyOS/cachyos-calamares/blob/e6c22095c3ed4e51725a7cbf9870d453462eb1fb/src/modules/pacstrap/main.py",
+      "format": "pinned source code",
+      "relevance": "Packages and Btrfs integration selected for Limine installations",
+      "local_note": "bootloaders/CACHYOS_LIMINE.md"
+    },
+    {
+      "id": "cachyos-limine-pkgbuild",
+      "category": "platform",
+      "title": "CachyOS Limine package recipe",
+      "url": "https://github.com/CachyOS/CachyOS-PKGBUILDS/tree/master/limine",
+      "format": "living package source",
+      "relevance": "CachyOS packaging source for Limine",
+      "local_note": "bootloaders/CACHYOS_LIMINE.md"
+    },
+    {
+      "id": "util-linux-lsblk",
+      "category": "storage",
+      "title": "util-linux lsblk(8)",
+      "url": "https://man7.org/linux/man-pages/man8/lsblk.8.html",
+      "format": "upstream manual",
+      "relevance": "Structured block-device discovery and output stability",
+      "local_note": "storage/DISCOVERY_AND_FILESYSTEMS.md"
+    },
+    {
+      "id": "util-linux-blkid",
+      "category": "storage",
+      "title": "util-linux blkid(8)",
+      "url": "https://man7.org/linux/man-pages/man8/blkid.8.html",
+      "format": "upstream manual",
+      "relevance": "Filesystem metadata, permissions, cache and ambiguous probes",
+      "local_note": "storage/DISCOVERY_AND_FILESYSTEMS.md"
+    },
+    {
+      "id": "arch-esp",
+      "category": "storage",
+      "title": "ArchWiki: EFI system partition",
+      "url": "https://wiki.archlinux.org/title/EFI_system_partition",
+      "format": "living documentation",
+      "relevance": "ESP identification, GPT type and preservation considerations",
+      "local_note": "storage/UEFI_AND_ESP.md"
+    },
+    {
+      "id": "arch-uefi",
+      "category": "storage",
+      "title": "ArchWiki: Unified Extensible Firmware Interface",
+      "url": "https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface",
+      "format": "living documentation",
+      "relevance": "UEFI boot mode, firmware architecture and EFI variables",
+      "local_note": "storage/UEFI_AND_ESP.md"
+    },
+    {
+      "id": "btrfs-subvolumes",
+      "category": "storage",
+      "title": "Btrfs documentation: Subvolumes",
+      "url": "https://btrfs.readthedocs.io/en/latest/Subvolumes.html",
+      "format": "upstream documentation",
+      "relevance": "Subvolume identity, mount behavior and snapshot limits",
+      "local_note": "storage/BTRFS_SUBVOLUMES.md"
+    },
+    {
+      "id": "arch-chroot-wiki",
+      "category": "recovery",
+      "title": "ArchWiki: Chroot",
+      "url": "https://wiki.archlinux.org/title/Chroot",
+      "format": "living documentation",
+      "relevance": "Recovery chroot prerequisites, mounts and Btrfs handling",
+      "local_note": "recovery/CHROOT.md"
+    },
+    {
+      "id": "arch-chroot-man",
+      "category": "recovery",
+      "title": "arch-chroot(8)",
+      "url": "https://man.archlinux.org/man/arch-chroot.8",
+      "format": "upstream manual",
+      "relevance": "API filesystem and resolver setup in Arch chroot",
+      "local_note": "recovery/CHROOT.md"
+    },
+    {
+      "id": "arch-mkinitcpio",
+      "category": "recovery",
+      "title": "ArchWiki: mkinitcpio",
+      "url": "https://wiki.archlinux.org/title/Mkinitcpio",
+      "format": "living documentation",
+      "relevance": "Initramfs generation, hooks and kernel presets",
+      "local_note": "recovery/INITRAMFS_MKINITCPIO.md"
+    },
+    {
+      "id": "cachyos-installation",
+      "category": "platform",
+      "title": "CachyOS Wiki: Installation Desktop/Laptop",
+      "url": "https://wiki.cachyos.org/installation/installation_on_root/",
+      "format": "living documentation",
+      "relevance": "CachyOS installer boot-manager choices and platform context",
+      "local_note": "recovery/CACHYOS.md"
+    },
+    {
+      "id": "rust-command",
+      "category": "development",
+      "title": "Rust std::process::Command",
+      "url": "https://doc.rust-lang.org/std/process/struct.Command.html",
+      "format": "API documentation",
+      "relevance": "Safe argument-separated process construction",
+      "local_note": "development/RUST_PROCESSES.md"
+    },
+    {
+      "id": "rust-output",
+      "category": "development",
+      "title": "Rust std::process::Output",
+      "url": "https://doc.rust-lang.org/std/process/struct.Output.html",
+      "format": "API documentation",
+      "relevance": "Exit status, stdout and stderr handling",
+      "local_note": "development/RUST_PROCESSES.md"
+    },
+    {
+      "id": "cargo-test",
+      "category": "development",
+      "title": "Cargo test",
+      "url": "https://doc.rust-lang.org/cargo/commands/cargo-test.html",
+      "format": "tool documentation",
+      "relevance": "Unit, integration and documentation test execution",
+      "local_note": "development/CARGO_TESTS.md"
+    },
+    {
+      "id": "shellcheck",
+      "category": "development",
+      "title": "ShellCheck",
+      "url": "https://www.shellcheck.net/",
+      "format": "tool documentation",
+      "relevance": "Static analysis of shell scripts",
+      "local_note": "development/SHELL_SAFETY.md"
+    },
+    {
+      "id": "shellcheck-sc2086",
+      "category": "development",
+      "title": "ShellCheck SC2086",
+      "url": "https://www.shellcheck.net/wiki/SC2086",
+      "format": "tool documentation",
+      "relevance": "Word splitting and globbing risks in unquoted expansions",
+      "local_note": "development/SHELL_SAFETY.md"
+    }
+  ]
+}
