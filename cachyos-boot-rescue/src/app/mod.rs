@@ -2,12 +2,25 @@
 //!
 //! Contém a lógica de inicialização, boas-vindas e execução principal.
 
+pub mod model;
+pub mod state;
+pub mod commands;
+pub mod events;
+pub mod reducer;
+
 use crate::cli::{CliArgs, MergedConfig};
 use crate::config::Config;
 use crate::error::Result;
 use crate::logging::{self, export_session_report};
 use clap::Parser;
 use tracing::info;
+
+// Re-exports para conveniência
+pub use model::{AppModel, OpId, OpKind, MountStage};
+pub use state::{AppState, SharedData, OperationState};
+pub use commands::AppCommand;
+pub use events::AppEvent;
+pub use reducer::reduce;
 
 /// Executa a aplicação principal.
 pub async fn run() -> Result<()> {

@@ -1,0 +1,27 @@
+//! Comandos da aplicação (solicitações de execução).
+
+use crate::app::model::OpId;
+use std::path::PathBuf;
+
+/// Comandos que podem ser despachados para o TaskManager.
+#[derive(Debug, Clone)]
+pub enum AppCommand {
+    /// Inicia descoberta de hardware/instalações.
+    RunDiscovery,
+    /// Constrói plano de montagem para o candidato selecionado.
+    BuildMountPlan { candidate_idx: usize },
+    /// Executa montagem com o plano fornecido.
+    ExecuteMount { plan: crate::storage::MountPlan },
+    /// Executa comando no chroot.
+    ExecuteChrootCommand { command: Vec<String> },
+    /// Cancela operação em andamento.
+    CancelOperation { op_id: OpId },
+    /// Exporta relatório sanitizado.
+    ExportReport { output_path: PathBuf },
+    /// Sai da aplicação.
+    Quit,
+    /// Evento de redimensionamento do terminal.
+    TerminalResize,
+    /// Tick periódico para timeouts/animations.
+    Tick,
+}
