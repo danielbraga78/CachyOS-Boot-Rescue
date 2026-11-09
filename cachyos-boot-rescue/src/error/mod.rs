@@ -95,6 +95,13 @@ pub enum Error {
         reason: Option<String>,
     },
 
+    /// Erro de operação bloqueada por outra operação mutável concorrente.
+    #[error("Operação bloqueada: {message}")]
+    OperationBlocked {
+        /// Descrição da operação que tentou rodar.
+        message: String,
+    },
+
     /// Erro de estado inválido (ex: pré-condição não atendida).
     #[allow(dead_code)] // Para fases futuras
     #[error("Estado inválido: {message}")]
@@ -201,6 +208,13 @@ impl Error {
         }
     }
 
+    /// Cria um erro de operação bloqueada.
+    pub fn operation_blocked(message: impl Into<String>) -> Self {
+        Self::OperationBlocked {
+            message: message.into(),
+        }
+    }
+
     /// Cria um erro de estado inválido.
     #[allow(dead_code)] // Para fases futuras
     pub fn invalid_state(message: impl Into<String>, expected: Option<String>) -> Self {
@@ -255,6 +269,7 @@ impl Error {
             Error::Filesystem { .. } => 73,   // EX_CANTCREAT
             Error::Detection { .. } => 69,    // EX_UNAVAILABLE
             Error::Unsupported { .. } => 78,  // EX_CONFIG
+            Error::OperationBlocked { .. } => 70, // EX_SOFTWARE
             Error::InvalidState { .. } => 70, // EX_SOFTWARE
             Error::Internal { .. } => 70,     // EX_SOFTWARE
         }
