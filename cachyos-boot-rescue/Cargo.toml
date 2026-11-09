@@ -52,7 +52,7 @@ serde_json = "1.0"
 dirs = "5.0"
 
 # Runtime assíncrono
-tokio = { version = "1.40", features = ["rt-multi-thread", "macros"] }
+tokio = { version = "1.40", features = ["rt-multi-thread", "macros", "sync"] }
 
 # TUI
 ratatui = { version = "0.28", features = ["crossterm"] }
