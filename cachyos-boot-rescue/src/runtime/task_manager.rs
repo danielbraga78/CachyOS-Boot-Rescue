@@ -1,169 +1,355 @@
-//! Gerenciador de tarefas assíncronas com controle de concorrência.
+//! Gerenciador de operações assíncronas e exclusão mútua de operações de escrita.
 
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    path::PathBuf,
+    sync::{Arc, Mutex},
+};
 
-use crate::app::{AppCommand, AppEvent, OpId, OpKind};
-use crate::runtime::{CommandReceiver, EventSender};
-use crate::storage::MountPlan;
+use crate::{
+    app::{AppCommand, AppEvent, OpId, OpKind},
+    discovery::{self, types::DiscoveryReport},
+    error::Error,
+    logging,
+    operations::{execute_mount, run_chroot_task},
+    runtime::{CommandReceiver, CommandSender, EventSender, command_channel},
+    storage::{self, MountPlan},
+};
 
-/// Handle para uma operação ativa.
 struct OperationHandle {
-    id: OpId,
     kind: OpKind,
-    abort_handle: tokio::task::AbortHandle,
+    task: tokio::task::JoinHandle<()>,
 }
 
-/// Gerenciador de tarefas que controla concorrência e cancelamento.
+/// Gerencia comandos da UI e mantém o `ChrootManager` em uma única task.
 pub struct TaskManager {
     command_rx: CommandReceiver,
     event_tx: EventSender,
     active_operations: HashMap<OpId, OperationHandle>,
-    discovery_op_id: Option<OpId>,
-    mount_op_id: Option<OpId>,
-    chroot_op_id: Option<OpId>,
+    finished_tx: tokio::sync::mpsc::UnboundedSender<OpId>,
+    finished_rx: tokio::sync::mpsc::UnboundedReceiver<OpId>,
+    discovery_report: Arc<Mutex<Option<DiscoveryReport>>>,
+    root_mount: PathBuf,
+    chroot_command_tx: Arc<Mutex<Option<CommandSender>>>,
+    chroot_task: Arc<Mutex<Option<tokio::task::JoinHandle<()>>>>,
 }
 
 impl TaskManager {
-    /// Cria um novo TaskManager.
+    /// Cria um novo gerenciador com um ponto de montagem exclusivo por sessão.
     pub fn new(command_rx: CommandReceiver, event_tx: EventSender) -> Self {
+        let session_id = uuid::Uuid::new_v4();
+        let (finished_tx, finished_rx) = tokio::sync::mpsc::unbounded_channel();
+
         Self {
             command_rx,
             event_tx,
             active_operations: HashMap::new(),
-            discovery_op_id: None,
-            mount_op_id: None,
-            chroot_op_id: None,
+            finished_tx,
+            finished_rx,
+            discovery_report: Arc::new(Mutex::new(None)),
+            root_mount: PathBuf::from("/mnt/cachyos-boot-rescue").join(session_id.to_string()),
+            chroot_command_tx: Arc::new(Mutex::new(None)),
+            chroot_task: Arc::new(Mutex::new(None)),
         }
     }
 
-    /// Executa o loop principal do TaskManager.
+    /// Executa o loop do TaskManager e limpa as tasks ao encerrar.
     pub async fn run(mut self) {
-        while let Some(cmd) = self.command_rx.recv().await {
-            self.handle_command(cmd);
+        loop {
+            tokio::select! {
+                command = self.command_rx.recv() => {
+                    match command {
+                        Some(AppCommand::Quit) | None => break,
+                        Some(command) => self.handle_command(command).await,
+                    }
+                }
+                Some(op_id) = self.finished_rx.recv() => {
+                    self.active_operations.remove(&op_id);
+                }
+            }
         }
+        self.shutdown_all().await;
     }
 
     /// Processa um comando recebido.
-    pub async fn handle_command(&mut self, cmd: AppCommand) {
-        match cmd {
+    pub async fn handle_command(&mut self, command: AppCommand) {
+        match command {
             AppCommand::RunDiscovery => self.spawn_discovery(),
-            AppCommand::BuildMountPlan { candidate_idx } => self.spawn_build_mount_plan(candidate_idx),
+            AppCommand::BuildMountPlan { candidate_idx } => {
+                self.spawn_build_mount_plan(candidate_idx)
+            }
             AppCommand::ExecuteMount { plan } => self.spawn_mount(plan),
-            AppCommand::ExecuteChrootCommand { command } => self.spawn_chroot_command(command),
+            AppCommand::ExecuteChrootCommand { command } => self.send_chroot_command(command).await,
             AppCommand::CancelOperation { op_id } => self.cancel_operation(op_id),
             AppCommand::ExportReport { output_path } => self.spawn_export_report(output_path),
+            AppCommand::LeaveChroot => self.leave_chroot().await,
+            AppCommand::TerminalResize | AppCommand::Tick => {}
             AppCommand::Quit => self.shutdown_all().await,
-            AppCommand::TerminalResize => {
-                // Ignorado no TaskManager - tratado pela UI
-            }
-            AppCommand::Tick => {
-                // Ignorado no TaskManager - tratado pela UI
-            }
         }
     }
 
-    /// Verifica se uma operação do tipo especificado pode rodar.
     fn can_run(&self, kind: OpKind) -> bool {
+        let mount_running = self
+            .active_operations
+            .values()
+            .any(|operation| operation.kind == OpKind::Mount);
         match kind {
-            OpKind::Discovery => true, // Múltiplos discovery OK
-            OpKind::Mount | OpKind::ChrootCommand => {
-                // Apenas UMA operação mutável por vez
-                !self.active_operations.values().any(|op| 
-                    matches!(op.kind, OpKind::Mount | OpKind::ChrootCommand)
-                )
+            OpKind::Discovery => true,
+            OpKind::Mount => {
+                !mount_running
+                    && self
+                        .chroot_command_tx
+                        .lock()
+                        .map(|sender| sender.is_none())
+                        .unwrap_or(false)
             }
+            OpKind::ChrootCommand => !mount_running,
         }
     }
 
-    /// Inicia operação de discovery.
+    fn spawn_tracked<F>(&mut self, op_id: OpId, kind: OpKind, operation: F)
+    where
+        F: std::future::Future<Output = ()> + Send + 'static,
+    {
+        let finished_tx = self.finished_tx.clone();
+        let task = tokio::spawn(async move {
+            operation.await;
+            let _ = finished_tx.send(op_id);
+        });
+        self.active_operations
+            .insert(op_id, OperationHandle { kind, task });
+    }
+
     fn spawn_discovery(&mut self) {
+        let event_tx = self.event_tx.clone();
+        let report_slot = Arc::clone(&self.discovery_report);
         let op_id = OpId::new();
-        let evt_tx = self.event_tx.clone();
-        
-        let handle = tokio::spawn(async move {
-            // Discovery será implementado em Task 5
-            let _ = evt_tx.send(AppEvent::DiscoveryCompleted(Err(crate::error::Error::internal("não implementado")))).await;
+
+        self.spawn_tracked(op_id, OpKind::Discovery, async move {
+            let result = tokio::task::spawn_blocking(|| discovery::run_discovery(None)).await;
+            let result = match result {
+                Ok(result) => result,
+                Err(error) => Err(Error::internal(error.to_string())),
+            };
+            if let Ok(report) = &result {
+                // Lock, update, and release before any await
+                if let Ok(mut slot) = report_slot.lock() {
+                    *slot = Some(report.clone());
+                } else {
+                    let _ = event_tx
+                        .send(AppEvent::DiscoveryCompleted(Err(Error::internal(
+                            "Falha ao atualizar o resultado da descoberta",
+                        ))))
+                        .await;
+                    return;
+                }
+            }
+            let _ = event_tx.send(AppEvent::DiscoveryCompleted(result)).await;
         });
-        
-        let abort_handle = handle.abort_handle();
-        self.active_operations.insert(op_id, OperationHandle { id: op_id, kind: OpKind::Discovery, abort_handle });
-        self.discovery_op_id = Some(op_id);
     }
 
-    /// Inicia construção do plano de montagem.
-    fn spawn_build_mount_plan(&mut self, _candidate_idx: usize) {
-        // BuildMountPlan será implementado em Task 5
-        let _ = self.event_tx.send(AppEvent::MountPlanCompleted(Err(crate::error::Error::internal("não implementado"))));
+    fn spawn_build_mount_plan(&mut self, candidate_idx: usize) {
+        let report = match self.discovery_report.lock() {
+            Ok(report) => report.clone(),
+            Err(_) => {
+                let _ = self
+                    .event_tx
+                    .try_send(AppEvent::MountPlanCompleted(Err(Error::internal(
+                        "Falha ao acessar o resultado da descoberta",
+                    ))));
+                return;
+            }
+        };
+        let Some(report) = report else {
+            let _ =
+                self.event_tx
+                    .try_send(AppEvent::MountPlanCompleted(Err(Error::invalid_state(
+                        "Execute a descoberta antes de criar o plano",
+                        None,
+                    ))));
+            return;
+        };
+        let Some(candidate) = report.linux_candidates.get(candidate_idx).cloned() else {
+            let _ = self
+                .event_tx
+                .try_send(AppEvent::MountPlanCompleted(Err(Error::validation(
+                    "Instalação selecionada não existe",
+                    None,
+                ))));
+            return;
+        };
+
+        let event_tx = self.event_tx.clone();
+        let root_mount = self.root_mount.clone();
+        let op_id = OpId::new();
+        self.spawn_tracked(op_id, OpKind::Discovery, async move {
+            let result = tokio::task::spawn_blocking(move || {
+                storage::build_mount_plan(
+                    &candidate,
+                    &report.devices,
+                    candidate.fstab_content.as_deref(),
+                    &root_mount,
+                )
+            })
+            .await
+            .map_err(|error| Error::internal(error.to_string()));
+            let _ = event_tx.send(AppEvent::MountPlanCompleted(result)).await;
+        });
     }
 
-    /// Inicia operação de montagem.
-    fn spawn_mount(&mut self, _plan: MountPlan) {
+    fn spawn_mount(&mut self, plan: MountPlan) {
         if !self.can_run(OpKind::Mount) {
-            let _ = self.event_tx.try_send(AppEvent::MountCompleted(Err(crate::error::Error::operation_blocked("outra operação mutável em andamento"))));
+            let _ =
+                self.event_tx
+                    .try_send(AppEvent::MountCompleted(Err(Error::operation_blocked(
+                        "outra operação mutável está em andamento",
+                    ))));
             return;
         }
+        if plan.has_blocking_errors() {
+            let _ = self
+                .event_tx
+                .try_send(AppEvent::MountCompleted(Err(Error::validation(
+                    "O plano contém erros bloqueantes",
+                    None,
+                ))));
+            return;
+        }
+
+        let event_tx = self.event_tx.clone();
+        let root_mount = self.root_mount.clone();
+        let chroot_task = Arc::clone(&self.chroot_task);
+        let chroot_event_tx = self.event_tx.clone();
         let op_id = OpId::new();
-        let evt_tx = self.event_tx.clone();
-        
-        let handle = tokio::spawn(async move {
-            // Montagem será implementada em Task 6
-            let _ = evt_tx.send(AppEvent::MountCompleted(Err(crate::error::Error::internal("não implementado")))).await;
+        let (chroot_tx, chroot_rx) = command_channel(crate::runtime::COMMAND_CHANNEL_BUFFER);
+        if let Ok(mut sender) = self.chroot_command_tx.lock() {
+            *sender = Some(chroot_tx);
+        }
+
+        self.spawn_tracked(op_id, OpKind::Mount, async move {
+            execute_mount(event_tx, plan, root_mount.clone()).await;
+            // Spawn chroot task after mount (it will handle its own errors)
+            let handle = tokio::spawn(run_chroot_task(chroot_event_tx, chroot_rx, root_mount));
+            if let Ok(mut task) = chroot_task.lock() {
+                *task = Some(handle);
+            }
         });
-        
-        let abort_handle = handle.abort_handle();
-        self.active_operations.insert(op_id, OperationHandle { id: op_id, kind: OpKind::Mount, abort_handle });
-        self.mount_op_id = Some(op_id);
     }
 
-    /// Inicia comando chroot.
-    fn spawn_chroot_command(&mut self, _command: Vec<String>) {
+    async fn send_chroot_command(&mut self, command: Vec<String>) {
         if !self.can_run(OpKind::ChrootCommand) {
-            let _ = self.event_tx.send(AppEvent::ChrootCommandCompleted(Err(crate::error::Error::operation_blocked("outra operação mutável em andamento"))));
+            let _ = self
+                .event_tx
+                .send(AppEvent::ChrootCommandCompleted(Err(
+                    Error::operation_blocked("uma montagem ainda está em andamento"),
+                )))
+                .await;
             return;
         }
-        let op_id = OpId::new();
-        let evt_tx = self.event_tx.clone();
-        
-        let handle = tokio::spawn(async move {
-            // Chroot será implementado em Task 7
-            let _ = evt_tx.send(AppEvent::ChrootCommandCompleted(Err(crate::error::Error::internal("não implementado")))).await;
-        });
-        
-        let abort_handle = handle.abort_handle();
-        self.active_operations.insert(op_id, OperationHandle { id: op_id, kind: OpKind::ChrootCommand, abort_handle });
-        self.chroot_op_id = Some(op_id);
+
+        let sender = self
+            .chroot_command_tx
+            .lock()
+            .ok()
+            .and_then(|sender| sender.clone());
+        match sender {
+            Some(sender) => {
+                if let Err(error) = sender
+                    .send(AppCommand::ExecuteChrootCommand { command })
+                    .await
+                {
+                    if let Ok(mut current) = self.chroot_command_tx.lock() {
+                        *current = None;
+                    }
+                    let _ = self
+                        .event_tx
+                        .send(AppEvent::ChrootCommandCompleted(Err(Error::internal(
+                            error.to_string(),
+                        ))))
+                        .await;
+                }
+            }
+            None => {
+                let _ = self
+                    .event_tx
+                    .send(AppEvent::ChrootCommandCompleted(Err(Error::invalid_state(
+                        "O chroot não está preparado",
+                        None,
+                    ))))
+                    .await;
+            }
+        }
     }
 
-    /// Cancela uma operação em andamento.
     fn cancel_operation(&mut self, op_id: OpId) {
-        if let Some(handle) = self.active_operations.remove(&op_id) {
-            handle.abort_handle.abort();
-            // Limpar referência
-            if self.discovery_op_id == Some(op_id) {
-                self.discovery_op_id = None;
-            }
-            if self.mount_op_id == Some(op_id) {
-                self.mount_op_id = None;
-            }
-            if self.chroot_op_id == Some(op_id) {
-                self.chroot_op_id = None;
-            }
+        let Some(operation) = self.active_operations.remove(&op_id) else {
+            return;
+        };
+        if operation.kind == OpKind::Discovery {
+            operation.task.abort();
+            let _ = self
+                .event_tx
+                .try_send(AppEvent::DiscoveryCompleted(Err(Error::internal(
+                    "Descoberta cancelada",
+                ))));
+        } else {
+            self.active_operations.insert(op_id, operation);
         }
     }
 
-    /// Inicia exportação de relatório.
-    fn spawn_export_report(&mut self, _output_path: std::path::PathBuf) {
-        let evt_tx = self.event_tx.clone();
+    fn spawn_export_report(&mut self, output_path: PathBuf) {
+        let event_tx = self.event_tx.clone();
         tokio::spawn(async move {
-            // Exportação será implementada posteriormente
-            let _ = evt_tx.send(AppEvent::ReportExported(Err(crate::error::Error::internal("não implementado")))).await;
+            let result =
+                tokio::task::spawn_blocking(move || logging::export_session_report(&output_path))
+                    .await
+                    .map_err(|error| Error::internal(error.to_string()))
+                    .and_then(|result| result);
+            let _ = event_tx.send(AppEvent::ReportExported(result)).await;
         });
     }
 
-    /// Encerra todas as operações ativas.
-    async fn shutdown_all(&mut self) {
-        for (_, handle) in self.active_operations.drain() {
-            handle.abort_handle.abort();
+    async fn leave_chroot(&mut self) {
+        let sender = self
+            .chroot_command_tx
+            .lock()
+            .ok()
+            .and_then(|sender| sender.clone());
+        if let Some(sender) = sender {
+            let _ = sender.send(AppCommand::Quit).await;
         }
+        let task = self
+            .chroot_task
+            .lock()
+            .ok()
+            .and_then(|mut task| task.take());
+        if let Some(task) = task
+            && let Err(error) = task.await
+        {
+            let _ = self
+                .event_tx
+                .send(AppEvent::ChrootCleanedUp(Err(Error::internal(
+                    error.to_string(),
+                ))))
+                .await;
+        }
+        if let Ok(mut sender) = self.chroot_command_tx.lock() {
+            *sender = None;
+        }
+    }
+
+    async fn shutdown_all(&mut self) {
+        let active = self.active_operations.drain().collect::<Vec<_>>();
+        for (_, operation) in active {
+            if operation.kind == OpKind::Discovery {
+                operation.task.abort();
+            }
+            if let Err(error) = operation.task.await
+                && !error.is_cancelled()
+            {
+                tracing::error!(error = %error, "Falha ao finalizar operação");
+            }
+        }
+        self.leave_chroot().await;
     }
 }

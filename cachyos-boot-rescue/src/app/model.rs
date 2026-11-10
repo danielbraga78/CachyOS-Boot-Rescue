@@ -46,9 +46,10 @@ impl OpKind {
 }
 
 /// Estágio de montagem para progresso.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum MountStage {
     /// Preparando montagem.
+    #[default]
     Preparing,
     /// Montando raiz.
     MountingRoot,
@@ -62,6 +63,21 @@ pub enum MountStage {
     Finalizing,
     /// Concluído.
     Completed,
+}
+
+impl MountStage {
+    /// Retorna o label textual do estágio.
+    pub fn label(&self) -> &'static str {
+        match self {
+            MountStage::Preparing => "Preparando",
+            MountStage::MountingRoot => "Montando raiz",
+            MountStage::MountingBoot => "Montando /boot",
+            MountStage::MountingEfi => "Montando EFI",
+            MountStage::MountingOther => "Montando outros",
+            MountStage::Finalizing => "Finalizando",
+            MountStage::Completed => "Concluído",
+        }
+    }
 }
 
 /// Modelo principal da aplicação.

@@ -1,6 +1,6 @@
+use cachyos_boot_rescue::app::AppEvent;
 use cachyos_boot_rescue::operations::run_discovery_op;
 use cachyos_boot_rescue::runtime::event_channel;
-use cachyos_boot_rescue::app::AppEvent;
 
 #[tokio::test]
 async fn test_run_discovery_op_emits_completed_event() {

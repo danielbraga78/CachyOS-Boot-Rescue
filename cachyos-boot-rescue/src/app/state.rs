@@ -1,11 +1,11 @@
 //! Estados de navegação da aplicação.
 
-use crate::app::model::{OpId, OpKind, MountStage};
+use crate::app::model::{MountStage, OpId, OpKind};
+use crate::chroot::ChrootManager;
 use crate::discovery::types::DiscoveryReport;
+use crate::error::Error;
 use crate::storage::MountPlan;
 use crate::storage::MountSession;
-use crate::chroot::ChrootManager;
-use crate::error::Error;
 
 /// Estado principal de navegação da aplicação.
 #[derive(Debug, Clone, PartialEq)]
@@ -26,6 +26,8 @@ pub enum AppState {
     LogsReport,
     /// Tela de erro.
     Error { message: String },
+    /// Encerramento ordenado da aplicação.
+    Quit,
 }
 
 /// Dados compartilhados entre telas.

@@ -1,4 +1,4 @@
-use cachyos_boot_rescue::app::{AppModel, AppState, OperationState, OpId, OpKind};
+use cachyos_boot_rescue::app::{AppModel, AppState, OpId, OpKind, OperationState};
 
 #[test]
 fn test_app_model_default_state_is_welcome() {

@@ -1,13 +1,13 @@
 # CURRENT_STATUS.md
 # Estado atual do projeto Boot-repair
 
-**Última atualização:** 03/11/2026
+**Última atualização:** 10/11/2026
 
 ## 1. Situação geral
 
-O projeto tem as **Fases 1, 2, 3 e 4 implementadas e testadas**. Todas as verificações de qualidade passam (`cargo fmt --check`, `cargo clippy --all-targets --all-features -- -D warnings`, `cargo test --all-targets`, `cargo build --locked`).
+O projeto tem as **Fases 1, 2, 3, 4 e 5 implementadas e validadas**. Todas as verificações de qualidade passam (`cargo fmt --check`, `cargo clippy --all-targets --all-features -- -D warnings`, `cargo test --all-targets`, `cargo build --locked`).
 
-<badge>Estado: Fases 1-4 concluídas com correções de segurança</badge>
+<badge>Estado: Fases 1-5 concluídas com estabilização da TUI e fluxo de operações</badge>
 
 ## 2. Fases
 
@@ -17,14 +17,41 @@ O projeto tem as **Fases 1, 2, 3 e 4 implementadas e testadas**. Todas as verifi
 | 2 | Logging, sessões e relatórios sanitizados | **Concluída** | `tracing` + `tracing-subscriber` + `tracing-appender`, sessões com UUID, rotação diária + limite de arquivos, sanitização de segredos (senhas, tokens, chaves, LUKS, env vars, usernames, MACs, UUIDs), exportação tar.gz sanitizada. Testes com dados sintéticos contendo segredos. |
 | 3 | Descoberta somente leitura de hardware e instalações | **Concluída** | `lsblk --json` parsing robusto, enriquecimento `blkid`, identificação ESP (múltiplas candidatas, sem seleção arbitrária), detecção Linux (montadas + metadados, swap excluído), detecção UEFI/BIOS, classificação filesystems, valores ausentes = `None`, serial não serializado, timeouts/limites de saída, child parsing errors logged not discarded. 144 testes passam. |
 | 4 | Montagem e gerenciamento de Chroot | **Concluída com correções de segurança** | Parser puro fstab, MountPlan, MountSession, DeviceResolver, Btrfs subvolumes, LUKS detection, ChrootManager com pseudo-filesystems, execução comandos com timeout/sanitização, validação ambiente. **Correções de segurança aplicadas:** confinamento de montagens, validação fstab estrita, MountSession transacional, ChrootManager não destrutivo, sanitização de saída, LUKS unlock não implementado. |
-| 5 | TUI e fluxo do usuário | Planejada | Depende dos módulos anteriores. |
+| 5 | TUI e fluxo do usuário | **Concluída** | Implementação da app centralizada, reducer puro, canais typed, TaskManager, wrappers de operations (discovery/mount/chroot), telas da TUI (welcome/discovery/install_select/mount_review/mount_progress/chroot/error), fluxo de navegação e cancelamento com validação por testes. |
 | 6 | Diagnóstico somente leitura de bootloaders | Planejada | Depende das Fases 3–5. |
 | 7 | Backup, transações e rollback | Planejada | Testes somente com arquivos temporários/fixtures. |
 | 8 | Reparadores GRUB, Limine e initramfs | Planejada | Operações mutáveis somente com salvaguardas e ambientes descartáveis. |
 | 9 | Testes de integração, segurança e compatibilidade | Planejada | Cenários não executados devem permanecer explicitamente não testados. |
 | 10 | Empacotamento Pacman e releases | Planejada | Publicação no AUR permanece manual. |
 
-## 3. Evidências de Validação (Fase 3)
+## 3. Evidências de Validação (Fase 5)
+
+### Código Implementado (`cachyos-boot-rescue/src/app/`, `src/runtime/`, `src/operations/`, `src/ui/`)
+- `src/app/app.rs` - app loop TUI com terminal raw mode, evento de teclado/resize, reducer + runtime, setup/shutdown
+- `src/app/reducer.rs` - transições puras de estado para discovery, mount, chroot, erro e progresso
+- `src/app/state.rs` e `src/app/model.rs` - `AppState`, `SharedData`, `OperationState`, `MountStage`, `OpId`, `OpKind`
+- `src/runtime/task_manager.rs` - gestão de tarefas assíncronas, concorrência e cancelamento
+- `src/runtime/channels.rs` - canais `mpsc` tipados para `AppCommand`/`AppEvent`
+- `src/operations/discovery.rs`, `mount.rs`, `chroot.rs` - wrappers assíncronos com eventos do pipeline
+- `src/ui/screens/*` - telas de welcome, discovery, install select, mount review, progress, chroot e error
+- `src/ui/layout.rs` - render principal com header/body/footer e delegação de telas
+
+### Validação da Fase 5
+- `cargo fmt` - PASS
+- `cargo clippy --all-targets --all-features -- -D warnings` - PASS
+- `cargo test --all-targets` - PASS
+- `cargo build --locked` - PASS
+
+### Testes relevantes da fase
+- `tests/app_model_tests.rs`
+- `tests/app_reducer_tests.rs`
+- `tests/runtime_channels_tests.rs`
+- `tests/task_manager_tests.rs`
+- `tests/operations_discovery_tests.rs`
+- `tests/operations_mount_tests.rs`
+- `tests/operations_chroot_tests.rs`
+
+## 4. Evidências de Validação (Fase 3)
 
 ### Código Implementado (`cachyos-boot-rescue/src/discovery/`)
 - `types.rs` - Modelos tipados: `BlockDevice`, `Partition`, `Filesystem`, `EspCandidate`, `LinuxInstallationCandidate`, `DiscoveryReport`, `DeviceId`, `PartitionType`, `FilesystemType`, `UefiState`
@@ -154,13 +181,11 @@ cargo build --locked                 # PASS
 Nenhum. Fase 4 concluída com todos os critérios de aceitação validados **incluindo correções de segurança**.
 
 ## 8. Próximos Passos
-Iniciar Fase 5 (TUI e fluxo do usuário) quando autorizado. Requer:
-- Modelo de estado da aplicação e navegação entre telas
-- Tela de descoberta com lista de instalações e detalhes
-- Tela de revisão do plano de montagem (com status noauto/nofail/ambiguous)
-- Confirmação explícita antes de montar
-- Tela de progresso para operações demoradas
-- Tela de erro com exportação de relatório sanitizado
+Iniciar Fase 6 (Diagnóstico somente leitura de bootloaders) quando autorizado. A Fase 5 já foi concluída com:
+- App centralizada + reducer + runtime
+- Fluxo de discovery → install select → mount review → progress → chroot → error
+- Navegação por telas e cancelamento operacional
+- Base de UI e widgets estáveis para extensão futura
 
 ## 9. Registro de alterações
 
@@ -170,6 +195,7 @@ Iniciar Fase 5 (TUI e fluxo do usuário) quando autorizado. Requer:
 | 03/11/2026 | Correções da Fase 3: timeout/output limit, busca recursiva, removable/read_only Option<bool>, fstab_content proteção, documentação alinhada. |
 | 03/11/2026 | Implementação Fase 4: storage (fstab, mount_plan, mount_session, device_resolver, btrfs, luks), chroot (manager, command, validation), testes, CI. |
 | 03/11/2026 | **Correções de Segurança Fase 4**: confinamento montagens, validação fstab estrita, MountSession transacional, ChrootManager não destrutivo, sanitização saída, LUKS unlock não implementado, proteção dados sensíveis. Total verificado: 221 testes. |
+| 10/11/2026 | **Conclusão da Fase 5**: app centralizada, reducer, channels tipados, TaskManager, wrappers de operations, TUI com telas e fluxo discovery/mount/chroot/error validado com `cargo test --all-targets` + `cargo clippy --all-targets --all-features -- -D warnings`. |
 
 ---
 

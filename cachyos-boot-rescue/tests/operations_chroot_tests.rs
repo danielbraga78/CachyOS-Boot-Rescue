@@ -1,6 +1,6 @@
+use cachyos_boot_rescue::app::{AppCommand, AppEvent};
 use cachyos_boot_rescue::operations::run_chroot_task;
-use cachyos_boot_rescue::runtime::{event_channel, command_channel};
-use cachyos_boot_rescue::app::{AppEvent, AppCommand};
+use cachyos_boot_rescue::runtime::{command_channel, event_channel};
 use tempfile::tempdir;
 
 #[tokio::test]
@@ -11,15 +11,15 @@ async fn test_chroot_task_structure() {
     let (cmd_tx, cmd_rx) = command_channel(cachyos_boot_rescue::runtime::COMMAND_CHANNEL_BUFFER);
     let temp_dir = tempdir().unwrap();
     let root = temp_dir.path().to_path_buf();
-    
+
     // Note: Actual chroot preparation requires root privileges and will fail in tests
     // This test verifies the task can be spawned and the command channel works
     // The actual chroot functionality is tested in integration tests with proper privileges
     let handle = tokio::spawn(run_chroot_task(evt_tx, cmd_rx, root));
-    
+
     // Send quit immediately to test task cleanup
     cmd_tx.send(AppCommand::Quit).await.unwrap();
-    
+
     // Wait for cleanup event (or channel close)
     let evt = tokio::time::timeout(std::time::Duration::from_secs(5), evt_rx.recv()).await;
     // Task may fail to prepare (no root), but should handle quit gracefully
@@ -40,6 +40,6 @@ async fn test_chroot_task_structure() {
             panic!("Timeout waiting for task response");
         }
     }
-    
+
     handle.await.unwrap();
 }

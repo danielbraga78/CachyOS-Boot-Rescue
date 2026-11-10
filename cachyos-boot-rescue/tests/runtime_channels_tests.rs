@@ -1,5 +1,7 @@
-use cachyos_boot_rescue::runtime::{command_channel, event_channel, COMMAND_CHANNEL_BUFFER, EVENT_CHANNEL_BUFFER};
 use cachyos_boot_rescue::app::{AppCommand, AppEvent};
+use cachyos_boot_rescue::runtime::{
+    COMMAND_CHANNEL_BUFFER, EVENT_CHANNEL_BUFFER, command_channel, event_channel,
+};
 
 #[tokio::test]
 async fn test_command_channel_send_recv() {

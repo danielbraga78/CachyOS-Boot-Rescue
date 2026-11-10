@@ -1,6 +1,6 @@
+use cachyos_boot_rescue::app::AppEvent;
 use cachyos_boot_rescue::operations::execute_mount;
 use cachyos_boot_rescue::runtime::event_channel;
-use cachyos_boot_rescue::app::AppEvent;
 use tempfile::tempdir;
 
 #[tokio::test]

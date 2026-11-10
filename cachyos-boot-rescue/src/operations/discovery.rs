@@ -1,7 +1,7 @@
-use crate::discovery::{run_discovery, default_command_config};
-use crate::discovery::types::CommandConfig;
 use crate::app::AppEvent;
 use crate::app::events::AppError;
+use crate::discovery::types::CommandConfig;
+use crate::discovery::{default_command_config, run_discovery};
 use crate::error::Error;
 use crate::runtime::EventSender;
 

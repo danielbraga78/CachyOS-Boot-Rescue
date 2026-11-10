@@ -2,11 +2,15 @@
 //!
 //! Contém a lógica de inicialização, boas-vindas e execução principal.
 
-pub mod model;
-pub mod state;
+#[allow(clippy::module_inception)]
+pub mod app;
 pub mod commands;
 pub mod events;
+pub mod model;
 pub mod reducer;
+pub mod state;
+
+use std::io::IsTerminal;
 
 use crate::cli::{CliArgs, MergedConfig};
 use crate::config::Config;
@@ -16,11 +20,12 @@ use clap::Parser;
 use tracing::info;
 
 // Re-exports para conveniência
-pub use model::{AppModel, OpId, OpKind, MountStage};
-pub use state::{AppState, SharedData, OperationState};
+pub use app::App;
 pub use commands::AppCommand;
 pub use events::AppEvent;
+pub use model::{AppModel, MountStage, OpId, OpKind};
 pub use reducer::reduce;
+pub use state::{AppState, OperationState, SharedData};
 
 /// Executa a aplicação principal.
 pub async fn run() -> Result<()> {
@@ -56,14 +61,19 @@ pub async fn run() -> Result<()> {
         return Ok(());
     }
 
-    // Mostra boas-vindas
+    // Mostra boas-vindas no console em modo CLI de diagnóstico.
+    // Se o terminal for interativo, a TUI de fase 5 entra em cena;
+    // em ambientes não interativos (CI, testes) mantemos o comportamento
+    // seguro e previsível do CLI.
     show_welcome(config);
 
-    // TODO: Implementar lógica principal nas fases futuras
-    info!("Aplicação iniciada com sucesso");
-    info!("Próxima fase: implementar detecção de hardware e firmware");
+    if !std::io::stdin().is_terminal() || !std::io::stdout().is_terminal() {
+        info!("Terminal não interativo; mantendo execução em modo CLI");
+        return Ok(());
+    }
 
-    Ok(())
+    info!("Iniciando interface TUI de recuperação de boot");
+    App::run().await
 }
 
 /// Inicializa o sistema de logging baseado na configuração.

@@ -262,16 +262,16 @@ impl Error {
     #[allow(dead_code)] // Para fases futuras
     pub fn exit_code(&self) -> i32 {
         match self {
-            Error::Config { .. } => 64,       // EX_USAGE
-            Error::Validation { .. } => 64,   // EX_USAGE
-            Error::Io { .. } => 74,           // EX_IOERR
-            Error::Command { .. } => 70,      // EX_SOFTWARE
-            Error::Filesystem { .. } => 73,   // EX_CANTCREAT
-            Error::Detection { .. } => 69,    // EX_UNAVAILABLE
-            Error::Unsupported { .. } => 78,  // EX_CONFIG
+            Error::Config { .. } => 64,           // EX_USAGE
+            Error::Validation { .. } => 64,       // EX_USAGE
+            Error::Io { .. } => 74,               // EX_IOERR
+            Error::Command { .. } => 70,          // EX_SOFTWARE
+            Error::Filesystem { .. } => 73,       // EX_CANTCREAT
+            Error::Detection { .. } => 69,        // EX_UNAVAILABLE
+            Error::Unsupported { .. } => 78,      // EX_CONFIG
             Error::OperationBlocked { .. } => 70, // EX_SOFTWARE
-            Error::InvalidState { .. } => 70, // EX_SOFTWARE
-            Error::Internal { .. } => 70,     // EX_SOFTWARE
+            Error::InvalidState { .. } => 70,     // EX_SOFTWARE
+            Error::Internal { .. } => 70,         // EX_SOFTWARE
         }
     }
 }

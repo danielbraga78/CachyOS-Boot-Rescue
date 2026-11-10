@@ -4,8 +4,7 @@ pub mod channels;
 pub mod task_manager;
 
 pub use channels::{
-    command_channel, event_channel,
-    CommandSender, CommandReceiver, EventSender, EventReceiver,
-    COMMAND_CHANNEL_BUFFER, EVENT_CHANNEL_BUFFER,
+    COMMAND_CHANNEL_BUFFER, CommandReceiver, CommandSender, EVENT_CHANNEL_BUFFER, EventReceiver,
+    EventSender, command_channel, event_channel,
 };
 pub use task_manager::TaskManager;

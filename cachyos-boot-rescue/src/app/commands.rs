@@ -20,6 +20,8 @@ pub enum AppCommand {
     ExportReport { output_path: PathBuf },
     /// Sai da aplicação.
     Quit,
+    /// Encerra o chroot atual sem encerrar a aplicação.
+    LeaveChroot,
     /// Evento de redimensionamento do terminal.
     TerminalResize,
     /// Tick periódico para timeouts/animations.

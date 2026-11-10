@@ -1,5 +1,5 @@
-use tokio::sync::mpsc;
 use crate::app::{AppCommand, AppEvent};
+use tokio::sync::mpsc;
 
 pub type CommandSender = mpsc::Sender<AppCommand>;
 pub type CommandReceiver = mpsc::Receiver<AppCommand>;

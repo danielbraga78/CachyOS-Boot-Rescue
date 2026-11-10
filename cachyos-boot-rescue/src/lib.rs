@@ -10,5 +10,6 @@ pub mod logging;
 pub mod operations;
 pub mod runtime;
 pub mod storage;
+pub mod ui;
 
 pub use crate::error::{Error, Result};

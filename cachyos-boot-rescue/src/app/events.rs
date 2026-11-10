@@ -1,10 +1,10 @@
 //! Eventos da aplicação (resultados/notificações).
 
 use crate::app::model::MountStage;
-use crate::storage::MountSession;
-use crate::storage::MountPlan;
 use crate::discovery::types::DiscoveryReport;
 use crate::error::Error;
+use crate::storage::MountPlan;
+use crate::storage::MountSession;
 use std::path::PathBuf;
 
 /// Alias para o tipo de erro da aplicação.
@@ -18,7 +18,11 @@ pub enum AppEvent {
     /// Plano de montagem construído.
     MountPlanCompleted(Result<MountPlan, AppError>),
     /// Progresso de montagem.
-    MountProgress { stage: MountStage, percent: u8, message: String },
+    MountProgress {
+        stage: MountStage,
+        percent: u8,
+        message: String,
+    },
     /// Montagem concluída.
     MountCompleted(Result<MountSession, AppError>),
     /// Comando chroot concluído.
