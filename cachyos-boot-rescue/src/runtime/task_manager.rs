@@ -8,6 +8,7 @@ use std::{
 
 use crate::{
     app::{AppCommand, AppEvent, OpId, OpKind},
+    diagnostic::{runner::run_diagnostic_op, types::DiagnosticConfig},
     discovery::{self, types::DiscoveryReport},
     error::Error,
     logging,
@@ -80,6 +81,10 @@ impl TaskManager {
             }
             AppCommand::ExecuteMount { plan } => self.spawn_mount(plan),
             AppCommand::ExecuteChrootCommand { command } => self.send_chroot_command(command).await,
+            AppCommand::RunDiagnostic {
+                candidate_idx,
+                config,
+            } => self.spawn_diagnostic(candidate_idx, config),
             AppCommand::CancelOperation { op_id } => self.cancel_operation(op_id),
             AppCommand::ExportReport { output_path } => self.spawn_export_report(output_path),
             AppCommand::LeaveChroot => self.leave_chroot().await,
@@ -93,10 +98,16 @@ impl TaskManager {
             .active_operations
             .values()
             .any(|operation| operation.kind == OpKind::Mount);
+        let chroot_running = self
+            .active_operations
+            .values()
+            .any(|operation| operation.kind == OpKind::ChrootCommand);
         match kind {
             OpKind::Discovery => true,
+            OpKind::Diagnostic => !mount_running && !chroot_running,
             OpKind::Mount => {
                 !mount_running
+                    && !chroot_running
                     && self
                         .chroot_command_tx
                         .lock()
@@ -197,6 +208,53 @@ impl TaskManager {
         });
     }
 
+    fn spawn_diagnostic(&mut self, candidate_idx: usize, config: DiagnosticConfig) {
+        let report =
+            match self.discovery_report.lock() {
+                Ok(report) => report.clone(),
+                Err(_) => {
+                    let _ = self.event_tx.try_send(AppEvent::DiagnosticCompleted(Err(
+                        Error::internal("Falha ao acessar o resultado da descoberta"),
+                    )));
+                    return;
+                }
+            };
+        let Some(report) = report else {
+            let _ =
+                self.event_tx
+                    .try_send(AppEvent::DiagnosticCompleted(Err(Error::invalid_state(
+                        "Execute a descoberta antes do diagnóstico",
+                        None,
+                    ))));
+            return;
+        };
+        if report.linux_candidates.get(candidate_idx).is_none() {
+            let _ = self
+                .event_tx
+                .try_send(AppEvent::DiagnosticCompleted(Err(Error::validation(
+                    "Instalação selecionada não existe",
+                    None,
+                ))));
+            return;
+        }
+
+        // Obtém a sessão de montagem atual se houver
+        let mount_session = self.get_mount_session().cloned();
+
+        let event_tx = self.event_tx.clone();
+        let op_id = OpId::new();
+        self.spawn_tracked(op_id, OpKind::Diagnostic, async move {
+            run_diagnostic_op(event_tx, report, candidate_idx, mount_session, config).await;
+        });
+    }
+
+    /// Obtém a sessão de montagem ativa se houver (simplificado - retorna None por enquanto)
+    fn get_mount_session(&self) -> Option<&crate::storage::MountSession> {
+        // Em uma implementação completa, isso viria do estado compartilhado
+        // Por enquanto retorna None - diagnóstico funciona sem chroot
+        None
+    }
+
     fn spawn_mount(&mut self, plan: MountPlan) {
         if !self.can_run(OpKind::Mount) {
             let _ =
@@ -227,12 +285,18 @@ impl TaskManager {
         }
 
         self.spawn_tracked(op_id, OpKind::Mount, async move {
-            execute_mount(event_tx, plan, root_mount.clone()).await;
-            // Spawn chroot task after mount (it will handle its own errors)
-            let handle = tokio::spawn(run_chroot_task(chroot_event_tx, chroot_rx, root_mount));
-            if let Ok(mut task) = chroot_task.lock() {
-                *task = Some(handle);
+            // Execute mount and get result
+            let mount_result = execute_mount(event_tx, plan, root_mount.clone()).await;
+
+            // Only spawn chroot task if mount succeeded
+            if let Ok(_session) = mount_result {
+                let handle = tokio::spawn(run_chroot_task(chroot_event_tx, chroot_rx, root_mount));
+                if let Ok(mut task) = chroot_task.lock() {
+                    *task = Some(handle);
+                }
             }
+            // If mount failed, the error event was already sent by execute_mount,
+            // and we don't spawn the chroot task.
         });
     }
 
@@ -285,15 +349,39 @@ impl TaskManager {
         let Some(operation) = self.active_operations.remove(&op_id) else {
             return;
         };
-        if operation.kind == OpKind::Discovery {
-            operation.task.abort();
-            let _ = self
-                .event_tx
-                .try_send(AppEvent::DiscoveryCompleted(Err(Error::internal(
-                    "Descoberta cancelada",
-                ))));
-        } else {
-            self.active_operations.insert(op_id, operation);
+        match operation.kind {
+            OpKind::Discovery => {
+                operation.task.abort();
+                let _ = self
+                    .event_tx
+                    .try_send(AppEvent::DiscoveryCompleted(Err(Error::internal(
+                        "Descoberta cancelada",
+                    ))));
+            }
+            OpKind::Mount => {
+                operation.task.abort();
+                let _ = self
+                    .event_tx
+                    .try_send(AppEvent::MountCompleted(Err(Error::internal(
+                        "Montagem cancelada",
+                    ))));
+            }
+            OpKind::ChrootCommand => {
+                operation.task.abort();
+                let _ =
+                    self.event_tx
+                        .try_send(AppEvent::ChrootCommandCompleted(Err(Error::internal(
+                            "Comando chroot cancelado",
+                        ))));
+            }
+            OpKind::Diagnostic => {
+                operation.task.abort();
+                let _ =
+                    self.event_tx
+                        .try_send(AppEvent::DiagnosticCompleted(Err(Error::internal(
+                            "Diagnóstico cancelado",
+                        ))));
+            }
         }
     }
 

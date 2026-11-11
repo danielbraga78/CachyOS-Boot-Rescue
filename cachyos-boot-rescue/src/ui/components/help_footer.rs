@@ -113,7 +113,11 @@ pub mod default_bindings {
             },
             KeyBinding {
                 key: "Enter".into(),
-                description: "Selecionar".into(),
+                description: "Selecionar p/ montagem".into(),
+            },
+            KeyBinding {
+                key: "d".into(),
+                description: "Diagnóstico bootloader".into(),
             },
             KeyBinding {
                 key: "r".into(),
@@ -121,6 +125,31 @@ pub mod default_bindings {
             },
             KeyBinding {
                 key: "Esc".into(),
+                description: "Voltar".into(),
+            },
+        ]
+    }
+
+    pub fn diagnostic() -> Vec<KeyBinding> {
+        vec![
+            KeyBinding {
+                key: "↑/↓".into(),
+                description: "Navegar achados".into(),
+            },
+            KeyBinding {
+                key: "Enter".into(),
+                description: "Ver detalhes".into(),
+            },
+            KeyBinding {
+                key: "r".into(),
+                description: "Refazer diagnóstico".into(),
+            },
+            KeyBinding {
+                key: "e".into(),
+                description: "Exportar relatório".into(),
+            },
+            KeyBinding {
+                key: "Esc/q".into(),
                 description: "Voltar".into(),
             },
         ]

@@ -169,10 +169,3 @@ impl Screen for MountReviewScreen {
         }
     }
 }
-
-// Helper to get app from the closure
-impl MountReviewScreen {
-    fn _app(&self) -> Option<&crate::app::AppModel> {
-        None // This is a workaround for the closure
-    }
-}

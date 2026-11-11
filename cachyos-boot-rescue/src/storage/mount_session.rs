@@ -64,7 +64,7 @@ impl ActiveMount {
 }
 
 /// Sessão de montagem que rastreia todas as montagens realizadas.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MountSession {
     /// Montagens ativas (ordenadas: raiz primeiro, filhos depois).
     mounts: Arc<Mutex<Vec<ActiveMount>>>,

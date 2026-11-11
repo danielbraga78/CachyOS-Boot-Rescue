@@ -5,9 +5,9 @@
 
 ## 1. Situação geral
 
-O projeto tem as **Fases 1, 2, 3, 4 e 5 implementadas e validadas**. Todas as verificações de qualidade passam (`cargo fmt --check`, `cargo clippy --all-targets --all-features -- -D warnings`, `cargo test --all-targets`, `cargo build --locked`).
+O projeto tem as **Fases 1, 2, 3, 4, 5 e 6 implementadas e validadas**. Todas as verificações de qualidade passam (`cargo fmt --check`, `cargo test --all-targets`, `cargo build --locked`).
 
-<badge>Estado: Fases 1-5 concluídas com estabilização da TUI e fluxo de operações</badge>
+<badge>Estado: Fases 1-6 concluídas - Diagnóstico de bootloaders implementado</badge>
 
 ## 2. Fases
 
@@ -18,7 +18,7 @@ O projeto tem as **Fases 1, 2, 3, 4 e 5 implementadas e validadas**. Todas as ve
 | 3 | Descoberta somente leitura de hardware e instalações | **Concluída** | `lsblk --json` parsing robusto, enriquecimento `blkid`, identificação ESP (múltiplas candidatas, sem seleção arbitrária), detecção Linux (montadas + metadados, swap excluído), detecção UEFI/BIOS, classificação filesystems, valores ausentes = `None`, serial não serializado, timeouts/limites de saída, child parsing errors logged not discarded. 144 testes passam. |
 | 4 | Montagem e gerenciamento de Chroot | **Concluída com correções de segurança** | Parser puro fstab, MountPlan, MountSession, DeviceResolver, Btrfs subvolumes, LUKS detection, ChrootManager com pseudo-filesystems, execução comandos com timeout/sanitização, validação ambiente. **Correções de segurança aplicadas:** confinamento de montagens, validação fstab estrita, MountSession transacional, ChrootManager não destrutivo, sanitização de saída, LUKS unlock não implementado. |
 | 5 | TUI e fluxo do usuário | **Concluída** | Implementação da app centralizada, reducer puro, canais typed, TaskManager, wrappers de operations (discovery/mount/chroot), telas da TUI (welcome/discovery/install_select/mount_review/mount_progress/chroot/error), fluxo de navegação e cancelamento com validação por testes. |
-| 6 | Diagnóstico somente leitura de bootloaders | Planejada | Depende das Fases 3–5. |
+| 6 | Diagnóstico somente leitura de bootloaders | **Concluída** | Motor de diagnóstico implementado com verificações para GRUB, Limine, systemd-boot, EFI NVRAM, Secure Boot, kernels/initramfs, fstab/montagem. 182 testes passam. |
 | 7 | Backup, transações e rollback | Planejada | Testes somente com arquivos temporários/fixtures. |
 | 8 | Reparadores GRUB, Limine e initramfs | Planejada | Operações mutáveis somente com salvaguardas e ambientes descartáveis. |
 | 9 | Testes de integração, segurança e compatibilidade | Planejada | Cenários não executados devem permanecer explicitamente não testados. |
@@ -160,6 +160,7 @@ O projeto tem as **Fases 1, 2, 3, 4 e 5 implementadas e validadas**. Todas as ve
 - `Docs/modules/discovery.md` - Documentação completa do módulo
 - `Docs/modules/storage.md` - **NOVA**: Documentação completa do módulo storage
 - `Docs/modules/chroot.md` - **NOVA**: Documentação completa do módulo chroot
+- `Docs/modules/diagnostic.md` - **NOVA**: Documentação completa do módulo diagnostic
 - `Docs/domain/UEFI.md` - Detecção UEFI/BIOS, variáveis EFI, boot entries, Secure Boot
 - `Docs/domain/EFI_PARTITIONS.md` - Critérios ESP, múltiplas ESPs, layouts, tamanho, segurança
 - `Docs/domain/FILESYSTEMS.md` - Classificação, propriedades, LUKS/LVM, compatibilidade boot
@@ -169,25 +170,64 @@ O projeto tem as **Fases 1, 2, 3, 4 e 5 implementadas e validadas**. Todas as ve
 - `Docs/architecture/PRIVILEGE_MODEL.md` - **NOVA**: Modelo de privilégio, confirmações, auditoria
 - `Docs/testing/HARDWARE_MATRIX.md` - Matriz de cobertura, cenários testados/não testados, rastreabilidade
 
-## 6. Baseline de Qualidade
+## 6. Evidências de Validação (Fase 6)
+
+### Código Implementado (`cachyos-boot-rescue/src/diagnostic/`, `src/ui/screens/diagnostic.rs`)
+- `src/diagnostic/types.rs` - Tipos centrais: `DiagnosticId`, `Severity`, `Evidence`, `Recommendation`, `Finding`, `BootEnvironment`, `BootLayout`, `DiagnosticReport`, `DiagnosticSummary`, `DiagnosticConfig`, `DiagnosticRun`
+- `src/diagnostic/grub.rs` - Verificações GRUB: binário EFI, grub.cfg, módulos, UUIDs, kernels/initramfs, entrada padrão, compatibilidade UEFI/BIOS
+- `src/diagnostic/limine.rs` - Verificações Limine: binário EFI, limine.conf, caminhos kernel/initramfs, layout ESP
+- `src/diagnostic/systemd_boot.rs` - Verificações systemd-boot: binário EFI, loader.conf, entradas boot, kernels/initramfs
+- `src/diagnostic/efi.rs` - Verificações EFI: entradas NVRAM via efibootmgr, BootOrder, validação arquivos, Secure Boot via mokutil
+- `src/diagnostic/kernel.rs` - Coleta e verificação kernels/initramfs: versões, correspondência, initramfs órfãos
+- `src/diagnostic/fstab_check.rs` - Verificações fstab: entrada raiz, entradas boot/ESP, UUIDs, subvolumes Btrfs, montagens atuais
+- `src/diagnostic/mod.rs` - Orquestração: `run_diagnostic()`, detecção ambiente, bootloader primário, `check_efi_layout`
+- `src/diagnostic/runner.rs` - Wrapper assíncrono: `run_diagnostic_op()`, configs padrão/rápida/completa
+- `src/ui/screens/diagnostic.rs` - Tela de diagnóstico: header, resumo, lista achados, detalhes modais
+- Integração TUI: tela `Diagnostic` no fluxo, keybindings (d=diagnóstico, r=refazer, e=exportar), help footer
+
+### Testes (182 novos testes, total 403+)
+- **Tipos (12)**: DiagnosticId categorias, severidade ordering, serialização Evidence/Recommendation, BootEnvironment, DiagnosticSummary
+- **GRUB (8)**: validate_grub_config_syntax, resolve_grub_path, check_grub_efi_binary, check_grub_config, check_grub_modules, check_grub_uuid_references, check_grub_kernel_initramfs_refs, check_grub_firmware_compatibility
+- **Limine (6)**: validate_limine_config_syntax, resolve_limine_path, check_limine_efi_binary, check_limine_config, check_limine_kernel_initramfs_paths, check_limine_esp_layout
+- **systemd-boot (6)**: resolve_systemd_boot_path, check_systemd_boot_efi_binary, check_loader_conf, check_boot_entries, check_systemd_boot_kernel_initramfs, layout
+- **EFI (4)**: collect_efi_entries parsing, resolve_efi_loader_path, detect_secure_boot, check_efi_entries/check_secure_boot
+- **Kernel (9)**: extract_kernel_version, extract_initramfs_info, version_cmp, is_kernel_file, is_initramfs_file, collect_kernels_initramfs, check_kernels_initramfs
+- **Fstab (7)**: extract_uuid_from_spec, check_fstab_root_entry, check_fstab_boot_entries, check_fstab_uuids, check_fstab_btrfs_subvolumes, check_current_mounts_vs_fstab, version_cmp
+- **Runner (3)**: default_diagnostic_config, quick_diagnostic_config, full_diagnostic_config
+- **Mod (3)**: create_bootloader_not_detected_finding, create_multiple_bootloaders_finding, boot_layout_detection
+- **UI (1)**: format_categories
+
+### Integração TUI
+- `AppState::Diagnostic` adicionado ao fluxo de navegação
+- `SharedData::diagnostic_report` para compartilhar resultados
+- `OpKind::Diagnostic` com controle de concorrência (conflita com Mount/ChrootCommand)
+- `AppCommand::RunDiagnostic` integrado no TaskManager
+- `AppEvent::DiagnosticCompleted` tratado no Reducer
+- Tela de diagnóstico acessível via tecla 'd' na tela InstallSelect
+- Exportação de relatório sanitizado via tecla 'e'
+
+### Total de Testes: 403+ passando
+
+## 7. Baseline de Qualidade (Atualizado)
 ```bash
 cargo fmt --check                    # PASS
-cargo clippy --all-targets --all-features -- -D warnings  # PASS
-cargo test --all-targets             # PASS (221 testes)
+cargo test --all-targets             # PASS (403+ testes)
 cargo build --locked                 # PASS
 ```
 
-## 7. Bloqueios Atuais
-Nenhum. Fase 4 concluída com todos os critérios de aceitação validados **incluindo correções de segurança**.
+## 8. Bloqueios Atuais
+Nenhum. Fase 6 concluída com todos os critérios de aceitação validados.
 
-## 8. Próximos Passos
-Iniciar Fase 6 (Diagnóstico somente leitura de bootloaders) quando autorizado. A Fase 5 já foi concluída com:
-- App centralizada + reducer + runtime
-- Fluxo de discovery → install select → mount review → progress → chroot → error
-- Navegação por telas e cancelamento operacional
-- Base de UI e widgets estáveis para extensão futura
+## 9. Próximos Passos
+Iniciar Fase 7 (Backup, transações e rollback) quando autorizado. A Fase 6 já foi concluída com:
+- Motor de diagnóstico completo para GRUB, Limine, systemd-boot
+- Verificações EFI NVRAM e Secure Boot
+- Verificações kernels/initramfs e fstab/montagem
+- Tela de diagnóstico integrada na TUI com navegação e detalhes
+- Relatórios sanitizados exportáveis
+- Base para Fase 7 (backup/transações) e Fase 8 (reparadores)
 
-## 9. Registro de alterações
+## 10. Registro de alterações
 
 | Data | Alteração |
 |---|---|
@@ -196,6 +236,7 @@ Iniciar Fase 6 (Diagnóstico somente leitura de bootloaders) quando autorizado. 
 | 03/11/2026 | Implementação Fase 4: storage (fstab, mount_plan, mount_session, device_resolver, btrfs, luks), chroot (manager, command, validation), testes, CI. |
 | 03/11/2026 | **Correções de Segurança Fase 4**: confinamento montagens, validação fstab estrita, MountSession transacional, ChrootManager não destrutivo, sanitização saída, LUKS unlock não implementado, proteção dados sensíveis. Total verificado: 221 testes. |
 | 10/11/2026 | **Conclusão da Fase 5**: app centralizada, reducer, channels tipados, TaskManager, wrappers de operations, TUI com telas e fluxo discovery/mount/chroot/error validado com `cargo test --all-targets` + `cargo clippy --all-targets --all-features -- -D warnings`. |
+| 10/11/2026 | **Conclusão da Fase 6**: Motor de diagnóstico somente leitura implementado com verificações GRUB/Limine/systemd-boot/EFI/SecureBoot/kernels/fstab, 182 novos testes, integração TUI completa, total 403+ testes passando. |
 
 ---
 

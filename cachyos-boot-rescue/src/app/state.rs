@@ -2,6 +2,7 @@
 
 use crate::app::model::{MountStage, OpId, OpKind};
 use crate::chroot::ChrootManager;
+use crate::diagnostic::types::DiagnosticRun;
 use crate::discovery::types::DiscoveryReport;
 use crate::error::Error;
 use crate::storage::MountPlan;
@@ -22,6 +23,8 @@ pub enum AppState {
     MountProgress { stage: MountStage },
     /// Tela de chroot ativo.
     ChrootActive,
+    /// Tela de diagnóstico de bootloader.
+    Diagnostic,
     /// Tela de logs e relatórios.
     LogsReport,
     /// Tela de erro.
@@ -41,6 +44,8 @@ pub struct SharedData {
     pub mount_session: Option<MountSession>,
     /// Gerenciador de chroot (propriedade única).
     pub chroot_manager: Option<ChrootManager>,
+    /// Relatório de diagnóstico.
+    pub diagnostic_report: Option<DiagnosticRun>,
     /// ID da sessão.
     pub session_id: String,
     /// Último erro ocorrido.

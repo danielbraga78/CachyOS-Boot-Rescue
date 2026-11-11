@@ -29,6 +29,8 @@ pub enum OpKind {
     Mount,
     /// Comando chroot (exclusivo com outras mutáveis).
     ChrootCommand,
+    /// Diagnóstico (somente leitura, pode rodar com discovery).
+    Diagnostic,
 }
 
 impl OpKind {
@@ -36,11 +38,18 @@ impl OpKind {
     pub fn conflicts_with(&self, other: &OpKind) -> bool {
         match (self, other) {
             (OpKind::Discovery, OpKind::Discovery) => false,
+            (OpKind::Discovery, OpKind::Diagnostic) => false,
+            (OpKind::Diagnostic, OpKind::Discovery) => false,
+            (OpKind::Diagnostic, OpKind::Diagnostic) => false,
             (OpKind::Mount, OpKind::Mount) => true,
             (OpKind::Mount, OpKind::ChrootCommand) => true,
+            (OpKind::Mount, OpKind::Diagnostic) => true,
             (OpKind::ChrootCommand, OpKind::Mount) => true,
             (OpKind::ChrootCommand, OpKind::ChrootCommand) => true,
-            (OpKind::Discovery, _) | (_, OpKind::Discovery) => false,
+            (OpKind::ChrootCommand, OpKind::Diagnostic) => true,
+            (OpKind::Diagnostic, OpKind::Mount) => true,
+            (OpKind::Diagnostic, OpKind::ChrootCommand) => true,
+            _ => false,
         }
     }
 }

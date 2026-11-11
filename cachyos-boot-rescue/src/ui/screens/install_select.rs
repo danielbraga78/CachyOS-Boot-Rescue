@@ -8,6 +8,7 @@ use ratatui::{
 };
 
 use crate::app::{AppCommand, AppModel};
+use crate::diagnostic::runner::full_diagnostic_config;
 use crate::ui::components::HelpFooter;
 use crate::ui::help_footer::default_bindings;
 use crate::ui::list_view::{ListView, ListViewState};
@@ -100,6 +101,13 @@ impl Screen for InstallSelectScreen {
                 .list_state
                 .selected
                 .map(|idx| AppCommand::BuildMountPlan { candidate_idx: idx }),
+            KeyCode::Char('d') => self
+                .list_state
+                .selected
+                .map(|idx| AppCommand::RunDiagnostic {
+                    candidate_idx: idx,
+                    config: full_diagnostic_config(None),
+                }),
             KeyCode::Char('r') => Some(AppCommand::RunDiscovery),
             KeyCode::Esc => Some(AppCommand::Quit),
             _ => None,

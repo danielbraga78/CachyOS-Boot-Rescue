@@ -5,7 +5,11 @@ use crate::runtime::EventSender;
 use crate::storage::{MountPlan, MountSession, mount_session::execute_mount_plan};
 use std::path::PathBuf;
 
-pub async fn execute_mount(event_tx: EventSender, plan: MountPlan, root_mount: PathBuf) {
+pub async fn execute_mount(
+    event_tx: EventSender,
+    plan: MountPlan,
+    root_mount: PathBuf,
+) -> Result<MountSession, Error> {
     // Stage: Preparing
     let _ = event_tx
         .send(AppEvent::MountProgress {
@@ -33,7 +37,7 @@ pub async fn execute_mount(event_tx: EventSender, plan: MountPlan, root_mount: P
         })
         .await;
 
-    let event = match result {
+    match result {
         Ok(Ok(session)) => {
             let _ = event_tx
                 .send(AppEvent::MountProgress {
@@ -42,10 +46,23 @@ pub async fn execute_mount(event_tx: EventSender, plan: MountPlan, root_mount: P
                     message: "Montagem concluída".into(),
                 })
                 .await;
-            AppEvent::MountCompleted(Ok(session))
+            let _ = event_tx
+                .send(AppEvent::MountCompleted(Ok(session.clone())))
+                .await;
+            Ok(session)
         }
-        Ok(Err(e)) => AppEvent::MountCompleted(Err(AppError::from(e))),
-        Err(e) => AppEvent::MountCompleted(Err(Error::internal(e.to_string()))),
-    };
-    let _ = event_tx.send(event).await;
+        Ok(Err(e)) => {
+            let _ = event_tx
+                .send(AppEvent::MountCompleted(Err(AppError::from(e))))
+                .await;
+            Err(Error::internal("Falha na montagem".to_string()))
+        }
+        Err(e) => {
+            let err = Error::internal(e.to_string());
+            let _ = event_tx
+                .send(AppEvent::MountCompleted(Err(AppError::from(err))))
+                .await;
+            Err(Error::internal("Erro interno na montagem".to_string()))
+        }
+    }
 }

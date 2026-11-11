@@ -8,7 +8,7 @@ async fn test_execute_mount_emits_progress_and_completed() {
     let (tx, mut rx) = event_channel(cachyos_boot_rescue::runtime::EVENT_CHANNEL_BUFFER);
     let plan = cachyos_boot_rescue::storage::MountPlan::new();
     let root = tempdir().unwrap().path().to_path_buf();
-    execute_mount(tx, plan, root).await;
+    let _ = execute_mount(tx, plan, root).await;
     // Verifica MountProgress events + MountCompleted
     let mut progress_count = 0;
     let mut completed = false;

@@ -96,6 +96,7 @@ fn draw_footer(f: &mut Frame, app: &AppModel, area: Rect) {
         crate::app::AppState::MountReview => default_bindings::mount_review(),
         crate::app::AppState::MountProgress { .. } => default_bindings::mount_progress(),
         crate::app::AppState::ChrootActive => default_bindings::chroot_active(),
+        crate::app::AppState::Diagnostic => default_bindings::diagnostic(),
         crate::app::AppState::LogsReport => default_bindings::logs_report(),
         crate::app::AppState::Error { .. } => default_bindings::error(),
         crate::app::AppState::Quit => default_bindings::welcome(),

@@ -1,6 +1,7 @@
 //! Eventos da aplicação (resultados/notificações).
 
 use crate::app::model::MountStage;
+use crate::diagnostic::types::DiagnosticRun;
 use crate::discovery::types::DiscoveryReport;
 use crate::error::Error;
 use crate::storage::MountPlan;
@@ -12,6 +13,7 @@ pub type AppError = Error;
 
 /// Eventos que o TaskManager emite de volta para o Reducer.
 #[derive(Debug)]
+#[allow(clippy::large_enum_variant)]
 pub enum AppEvent {
     /// Discovery concluído.
     DiscoveryCompleted(Result<DiscoveryReport, AppError>),
@@ -33,6 +35,8 @@ pub enum AppEvent {
     ChrootCleanedUp(Result<(), AppError>),
     /// Relatório exportado.
     ReportExported(Result<PathBuf, AppError>),
+    /// Diagnóstico concluído.
+    DiagnosticCompleted(Result<DiagnosticRun, AppError>),
     /// Terminal redimensionado.
     TerminalResize,
     /// Tick periódico.

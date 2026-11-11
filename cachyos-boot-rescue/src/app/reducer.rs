@@ -79,6 +79,17 @@ pub fn reduce(model: AppModel, event: AppEvent) -> (AppModel, Vec<AppCommand>) {
             model.operation = OperationState::Idle;
             // Apenas loga sucesso
         }
+        AppEvent::DiagnosticCompleted(Ok(run)) => {
+            model.shared.diagnostic_report = Some(run);
+            model.state = AppState::Diagnostic;
+            model.operation = OperationState::Idle;
+        }
+        AppEvent::DiagnosticCompleted(Err(e)) => {
+            model.state = AppState::Error {
+                message: e.to_string(),
+            };
+            model.operation = OperationState::Idle;
+        }
         AppEvent::TerminalResize => {
             // UI trata, no-op no model
         }
